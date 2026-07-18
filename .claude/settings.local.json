@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:avatardasaude.com.br)"
+      "WebFetch(domain:avatardasaude.com.br)",
+      "Bash(npx --yes playwright install chromium --with-deps)"
     ]
   }
 }

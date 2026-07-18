@@ -12,6 +12,14 @@ import { cn, todayISO } from '@/lib/utils'
 
 const TOTAL = 6
 
+function Passo({ ativo, n, children }: { ativo: number; n: number; children: React.ReactNode }) {
+  return ativo === n ? (
+    <motion.div key={n} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="flex flex-col gap-4">
+      {children}
+    </motion.div>
+  ) : null
+}
+
 export default function Onboarding() {
   const user = useAuth((s) => s.user)
   const completeOnboarding = useGame((s) => s.completeOnboarding)
@@ -128,13 +136,6 @@ export default function Onboarding() {
     }
   }
 
-  const Passo = ({ n, children }: { n: number; children: React.ReactNode }) =>
-    passo === n ? (
-      <motion.div key={n} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="flex flex-col gap-4">
-        {children}
-      </motion.div>
-    ) : null
-
   return (
     <div className="min-h-screen app-bg">
       <div className="mx-auto max-w-lg px-5 py-6">
@@ -151,9 +152,11 @@ export default function Onboarding() {
 
         {/* balão do guia */}
         <div className="flex items-start gap-3 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-2xl shadow-lg shrink-0">🧬</div>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shrink-0">
+            <img src="/logo-fitlevel-white.svg" alt="FitLevel" className="w-7 h-auto" />
+          </div>
           <div className="card !p-3 !rounded-2xl !rounded-tl-md text-sm font-bold">
-            {passo === 1 && 'Oi! Sou o EVO, seu guia. Vamos nos conhecer? Esses dados calculam seus indicadores de saúde.'}
+            {passo === 1 && 'Oi! Sou seu guia FitLevel. Vamos nos conhecer? Esses dados calculam seus indicadores de saúde.'}
             {passo === 2 && 'Qual é a sua missão? Isso define suas metas de calorias e treino.'}
             {passo === 3 && 'Sono e água são 40% do seu score diário. Como está sua rotina hoje?'}
             {passo === 4 && 'Sem julgamentos — quanto mais sincero, melhor seu plano. 🤝'}
@@ -163,7 +166,7 @@ export default function Onboarding() {
         </div>
 
         <AnimatePresence mode="wait">
-          <Passo n={1}>
+          <Passo ativo={passo} n={1}>
             <div><span className="label">Nome</span><input className="input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Como te chamamos?" /></div>
             <div><span className="label">Sexo biológico (para cálculo da TMB)</span>
               <div className="flex gap-2">
@@ -187,7 +190,7 @@ export default function Onboarding() {
             <button className="btn-primary" disabled={!nome} onClick={() => setPasso(2)}>Continuar</button>
           </Passo>
 
-          <Passo n={2}>
+          <Passo ativo={passo} n={2}>
             <div><span className="label">Objetivo principal</span>
               <div className="grid grid-cols-2 gap-2">
                 {([['perder_peso', '🔥 Perder peso'], ['ganhar_massa', '💪 Ganhar massa'], ['manter_peso', '⚖️ Manter peso'], ['saude_geral', '❤️ Saúde geral']] as [Objetivo, string][]).map(([v, l]) => (
@@ -217,14 +220,14 @@ export default function Onboarding() {
             <button className="btn-primary" onClick={() => setPasso(3)}>Continuar</button>
           </Passo>
 
-          <Passo n={3}>
+          <Passo ativo={passo} n={3}>
             <div><span className="label">Horas de sono por noite: <b className="text-emerald-500">{sonoHoras}h</b></span><input type="range" min={3} max={11} step={0.5} value={sonoHoras} onChange={(e) => setSonoHoras(+e.target.value)} /></div>
             <div><span className="label">Horário que costuma dormir</span><input className="input" type="time" value={horarioSono} onChange={(e) => setHorarioSono(e.target.value)} /></div>
             <div><span className="label">Água por dia: <b className="text-cyan-500">{agua.toFixed(1)}L</b></span><input type="range" min={0} max={5} step={0.25} value={agua} onChange={(e) => setAgua(+e.target.value)} /></div>
             <button className="btn-primary" onClick={() => setPasso(4)}>Continuar</button>
           </Passo>
 
-          <Passo n={4}>
+          <Passo ativo={passo} n={4}>
             <div><span className="label">Como você avalia sua alimentação?</span>
               <div className="flex gap-2">
                 {([['ruim', '🍔 Ruim'], ['medio', '🍝 Média'], ['bom', '🥗 Boa']] as ['ruim' | 'medio' | 'bom', string][]).map(([v, l]) => (
@@ -255,7 +258,7 @@ export default function Onboarding() {
             <button className="btn-primary" onClick={() => setPasso(5)}>Continuar</button>
           </Passo>
 
-          <Passo n={5}>
+          <Passo ativo={passo} n={5}>
             <div><span className="label">Condições de saúde (toque para marcar)</span>
               <div className="flex flex-wrap gap-2">
                 {['Diabetes', 'Pré-diabetes', 'Hipertensão', 'Colesterol alto', 'Asma', 'Ansiedade', 'Depressão', 'Nenhuma'].map((d) => (
@@ -288,7 +291,7 @@ export default function Onboarding() {
             <button className="btn-primary" onClick={() => setPasso(6)}>Continuar</button>
           </Passo>
 
-          <Passo n={6}>
+          <Passo ativo={passo} n={6}>
             <div className="card !p-4 text-center">
               <AvatarEngine config={avatar} size={180} />
               <label className="btn-violet w-full mt-2 cursor-pointer">

@@ -42,7 +42,7 @@ export default function Nutricao() {
     if (!plano) return
     const doc = new jsPDF()
     let y = 20
-    doc.setFontSize(22).setTextColor(16, 185, 129).text('EVO — Plano Alimentar', 14, y)
+    doc.setFontSize(22).setTextColor(16, 185, 129).text('FitLevel — Plano Alimentar', 14, y)
     y += 8
     doc.setFontSize(11).setTextColor(100).text(`${p.nome} · ${p.idade} anos · Meta: ${p.metaCalorias} kcal/dia · Objetivo: ${p.objetivo.replace('_', ' ')}`, 14, y)
     y += 10

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Bot, Eye, Gamepad2, Rocket, Trophy, Zap } from 'lucide-react'
+import { ArrowRight, Bot, Eye, Gamepad2, Rocket, Trophy } from 'lucide-react'
 import { AvatarEngine, DEFAULT_AVATAR } from '@/components/avatar/AvatarEngine'
 import { useAuth } from '@/stores/auth'
 
@@ -9,10 +9,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen app-bg flex flex-col">
       <div className="mx-auto max-w-lg w-full px-6 pt-10 pb-8 flex-1 flex flex-col">
-        <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-sky-400/30">
-            <Zap size={22} fill="currentColor" />
-          </div>
+        <div className="flex items-center gap-2">
+          <img src="/logo-fitlevel.svg" alt="FitLevel" className="h-9 w-auto" />
           <span className="text-2xl font-black grad-text">FitLevel</span>
         </div>
 

@@ -113,7 +113,7 @@ export default function Social() {
         {aba === 'amigos' && (
           <div className="flex flex-col gap-2">
             <button className="btn-primary">➕ Adicionar amigo por código</button>
-            <p className="text-center text-xs font-bold text-slate-400 my-1">Seu código: <span className="text-emerald-500 font-black">EVO-{(g.userId ?? 'DEMO').slice(0, 6).toUpperCase()}</span></p>
+            <p className="text-center text-xs font-bold text-slate-400 my-1">Seu código: <span className="text-emerald-500 font-black">FL-{(g.userId ?? 'DEMO').slice(0, 6).toUpperCase()}</span></p>
             {AMIGOS_MOCK.map((a) => (
               <div key={a.nome} className="card flex items-center gap-3 !p-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-500 flex items-center justify-center text-lg">{a.emoji}</div>

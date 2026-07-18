@@ -15,6 +15,7 @@ body,
 body {
   font-family: var(--font-sans);
   @apply bg-[#f4f8fb] text-slate-700 antialiased;
+  overscroll-behavior-y: none;
 }
 
 .dark body {
@@ -56,6 +57,23 @@ body {
 
 .input {
   @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none focus:ring-2 focus:ring-teal-300/70 placeholder:text-slate-400 dark:border-white/10 dark:bg-white/5 dark:placeholder:text-slate-500;
+}
+
+/* A altura din\u00e2mica impede o salto do 100vh quando o teclado abre no celular. */
+.auth-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS amplia a tela ao focar inputs menores que 16px; isso parecia um recarregamento. */
+@media (max-width: 640px) {
+  .auth-shell .input {
+    min-height: 48px;
+    font-size: 16px;
+  }
 }
 
 .chip {

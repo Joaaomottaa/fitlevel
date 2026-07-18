@@ -120,13 +120,13 @@ export default function Perfil() {
         >
           Sair da conta
         </button>
-        <p className="text-center text-[10px] font-bold text-slate-400">EVO v0.1 · Hackathon Órbita 2026 · feito com 💚</p>
+        <p className="text-center text-[10px] font-bold text-slate-400">FitLevel v0.1 · Hackathon Órbita 2026 · feito com 💚</p>
       </div>
 
       <Modal open={upgrade} onClose={() => setUpgrade(false)}>
         <div className="text-center">
           <div className="text-5xl mb-2">⭐</div>
-          <h3 className="text-2xl font-black grad-text">EVO Premium</h3>
+          <h3 className="text-2xl font-black grad-text">FitLevel Premium</h3>
           <p className="font-bold text-slate-400 text-sm mt-1">R$ 19,90/mês</p>
           <div className="text-left my-4 flex flex-col gap-2">
             {['🥗 Plano alimentar IA ilimitado + PDF', '🤖 Chat IA sem limites', '👑 Itens cosméticos exclusivos', '💰 Criar desafios com PIX real', '📊 Relatórios avançados de evolução'].map((b) => (
