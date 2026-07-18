@@ -1,0 +1,88 @@
+{
+  "name": "EVO — Plano Alimentar (IA)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evo-meal-plan",
+        "responseMode": "responseNode",
+        "options": { "allowedOrigins": "*" }
+      },
+      "id": "wh-meal",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body ?? $input.first().json;\nconst p = b.perfil ?? {};\nconst prompt = `Monte um plano alimentar diário BRASILEIRO para:\\n${JSON.stringify(p)}\\nGosta de: ${(b.gosta ?? []).join(', ') || 'sem preferência'}\\nNão come: ${(b.naoGosta ?? []).join(', ') || 'nada'}\\nRefeições por dia: ${b.refeicoesDia ?? 4}\\n\\nUse alimentos comuns no Brasil (valores nutricionais da tabela TACO). Meta calórica: ${p.metaCalorias} kcal (respeite ±5%). Distribua proteína ao longo do dia.\\n\\nResponda APENAS com JSON válido neste formato exato, sem markdown:\\n{\\\"objetivo\\\":\\\"...\\\",\\\"totalKcal\\\":0,\\\"macros\\\":{\\\"prot\\\":0,\\\"carb\\\":0,\\\"gord\\\":0,\\\"fibra\\\":0},\\\"refeicoes\\\":[{\\\"nome\\\":\\\"Café da manhã\\\",\\\"horario\\\":\\\"07:00\\\",\\\"itens\\\":[{\\\"alimento\\\":\\\"...\\\",\\\"qtd\\\":\\\"100g\\\",\\\"kcal\\\":0,\\\"prot\\\":0,\\\"carb\\\":0,\\\"gord\\\":0}]}],\\\"recomendacoes\\\":[\\\"...\\\",\\\"Este plano não substitui um nutricionista.\\\"]}`;\nreturn [{ json: { prompt } }];"
+      },
+      "id": "code-prep-meal",
+      "name": "Montar prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 3000, messages: [{ role: 'user', content: $json.prompt }] }) }}",
+        "options": { "timeout": 110000 }
+      },
+      "id": "http-claude-meal",
+      "name": "Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "REPLACE_ME", "name": "Anthropic x-api-key" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const texto = $input.first().json.content?.[0]?.text ?? '{}';\nconst limpo = texto.replace(/```json|```/g, '').trim();\nlet plano = null;\ntry { plano = JSON.parse(limpo); } catch (e) { plano = null; }\nreturn [{ json: { plano } }];"
+      },
+      "id": "code-parse-meal",
+      "name": "Parsear JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ plano: $json.plano }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }]
+          }
+        }
+      },
+      "id": "resp-meal",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Montar prompt", "type": "main", "index": 0 }]] },
+    "Montar prompt": { "main": [[{ "node": "Claude API", "type": "main", "index": 0 }]] },
+    "Claude API": { "main": [[{ "node": "Parsear JSON", "type": "main", "index": 0 }]] },
+    "Parsear JSON": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "settings": {}
+}

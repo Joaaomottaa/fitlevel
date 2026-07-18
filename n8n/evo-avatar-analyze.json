@@ -1,0 +1,88 @@
+{
+  "name": "EVO — Análise de Foto p/ Avatar (IA Vision)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evo-avatar-analyze",
+        "responseMode": "responseNode",
+        "options": { "allowedOrigins": "*" }
+      },
+      "id": "wh-av",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body ?? $input.first().json;\nconst dataUrl = b.fotoFrenteBase64 ?? '';\nconst match = dataUrl.match(/^data:(image\\/\\w+);base64,(.+)$/);\nif (!match) return [{ json: { erro: true } }];\nconst prompt = `Analise a pessoa na foto para criar um avatar cartoon. Responda APENAS com JSON válido, sem markdown:\\n{\\\"skinTone\\\": \\\"um destes: #fbd7b5 #eab98c #c68863 #9c6644 #6f4a2f\\\", \\\"hair\\\": \\\"um destes: nenhum curto medio longo coque moicano cacheado\\\", \\\"hairColor\\\": \\\"um destes: #2f2a26 #5b4633 #8a6b47 #c98d3c #b45309 #94a3b8\\\", \\\"beard\\\": \\\"um destes: nenhuma bigode cavanhaque cheia\\\"}`;\nreturn [{ json: { mediaType: match[1], data: match[2], prompt } }];"
+      },
+      "id": "code-prep-av",
+      "name": "Preparar imagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 300, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: $json.mediaType, data: $json.data } }, { type: 'text', text: $json.prompt }] }] }) }}",
+        "options": { "timeout": 90000 }
+      },
+      "id": "http-claude-av",
+      "name": "Claude Vision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "REPLACE_ME", "name": "Anthropic x-api-key" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const texto = $input.first().json.content?.[0]?.text ?? '{}';\nconst limpo = texto.replace(/```json|```/g, '').trim();\nlet out = {};\ntry { out = JSON.parse(limpo); } catch (e) { out = {}; }\nreturn [{ json: out }];"
+      },
+      "id": "code-parse-av",
+      "name": "Parsear JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }]
+          }
+        }
+      },
+      "id": "resp-av",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Preparar imagem", "type": "main", "index": 0 }]] },
+    "Preparar imagem": { "main": [[{ "node": "Claude Vision", "type": "main", "index": 0 }]] },
+    "Claude Vision": { "main": [[{ "node": "Parsear JSON", "type": "main", "index": 0 }]] },
+    "Parsear JSON": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "settings": {}
+}

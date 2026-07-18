@@ -1,0 +1,77 @@
+{
+  "name": "EVO — Health Chat (IA)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evo-health-chat",
+        "responseMode": "responseNode",
+        "options": { "allowedOrigins": "*" }
+      },
+      "id": "wh-chat",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body ?? $input.first().json;\nconst perfil = b.perfil ?? {};\nconst historico = (b.historico ?? []).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }));\nconst system = `Você é o EVO, assistente de saúde de um app gamificado brasileiro. Responda em português do Brasil, de forma amigável, curta (máx. 120 palavras) e com 1-2 emojis. Use dados nutricionais confiáveis (TACO/USDA). NUNCA prescreva medicamentos nem diagnósticos; sempre lembre que não substitui médico/nutricionista quando o tema for clínico.\\n\\nPerfil do usuário: ${JSON.stringify(perfil)}`;\nreturn [{ json: { system, messages: [...historico, { role: 'user', content: b.pergunta ?? '' }] } }];"
+      },
+      "id": "code-prep-chat",
+      "name": "Montar prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: $json.system, messages: $json.messages }) }}",
+        "options": {}
+      },
+      "id": "http-claude-chat",
+      "name": "Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "REPLACE_ME", "name": "Anthropic x-api-key" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ resposta: $json.content?.[0]?.text ?? 'Desculpe, não consegui responder agora.' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }]
+          }
+        }
+      },
+      "id": "resp-chat",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [660, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Montar prompt", "type": "main", "index": 0 }]] },
+    "Montar prompt": { "main": [[{ "node": "Claude API", "type": "main", "index": 0 }]] },
+    "Claude API": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "settings": {}
+}
