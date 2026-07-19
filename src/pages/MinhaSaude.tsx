@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Download } from 'lucide-react'
 import { useGame } from '@/stores/game'
 import { Modal, ProgressRing, TopBar, useToast } from '@/components/ui'
 import { NIVEL_CUIDADO_COR, NIVEL_CUIDADO_LABEL, calcRiskFactors, classificaIMC } from '@/lib/health'
@@ -7,6 +8,7 @@ import { avgScore } from '@/lib/gamification'
 import { ACHIEVEMENTS } from '@/data/achievements'
 import { celebrar } from '@/components/avatar/EvolutionModal'
 import { fmtNum } from '@/lib/utils'
+import { gerarRelatorioSaude } from '@/lib/report'
 
 export default function MinhaSaude() {
   const g = useGame()
@@ -24,21 +26,37 @@ export default function MinhaSaude() {
   const historico = Object.keys(g.checkins).filter((d) => d <= hoje).sort().slice(-30)
     .map((d) => ({ dia: d.slice(8), score: g.checkins[d].score }))
 
+  const baixarRelatorio = () => {
+    gerarRelatorioSaude({
+      profile: p,
+      checkins: g.checkins,
+      scoreSaude: g.scoreSaude(),
+      streak: g.streak(),
+      hoje,
+      diaJornada: g.diaJornada(),
+    })
+    toast('📄 Relatório de saúde baixado!')
+  }
+
   return (
     <div className="min-h-screen app-bg">
       <TopBar titulo="❤️ Minha Saúde" />
       <div className="mx-auto max-w-lg px-4 py-4 flex flex-col gap-3 safe-bottom">
+        <button className="btn-primary w-full" onClick={baixarRelatorio}>
+          <Download size={18} /> Baixar relatório
+        </button>
+
         {/* scores */}
         <div className="card flex items-center justify-around">
           <div className="text-center">
             <ProgressRing value={g.scoreSaude()} size={100} label={`${g.scoreSaude()}`} sublabel="Geral" />
           </div>
           <div className="text-center">
-            <p className="text-2xl font-black text-cyan-500">{media7 || '—'}</p>
+            <p className="text-2xl font-black text-cyan-500">{media7 || '-'}</p>
             <p className="text-[10px] font-black uppercase text-slate-400">Média semanal</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-black text-violet-500">{media30 || '—'}</p>
+            <p className="text-2xl font-black text-violet-500">{media30 || '-'}</p>
             <p className="text-[10px] font-black uppercase text-slate-400">Média mensal</p>
           </div>
         </div>
@@ -124,7 +142,7 @@ export default function MinhaSaude() {
         )}
 
         <p className="text-[11px] font-semibold text-slate-400 text-center px-4">
-          ⚠️ Indicadores informativos calculados por fórmulas validadas — não substituem avaliação médica.
+          ⚠️ Indicadores informativos calculados por fórmulas validadas - não substituem avaliação médica.
         </p>
       </div>
 

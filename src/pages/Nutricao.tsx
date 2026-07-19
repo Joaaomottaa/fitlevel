@@ -32,7 +32,7 @@ export default function Nutricao() {
       toast('🤖 Plano gerado pela IA via n8n!')
     } else {
       novo = gerarPlanoLocal(p, { naoGosta: payload.naoGosta.concat(p.alergias), refeicoesDia })
-      toast(n8nConfigured ? 'IA indisponível — plano gerado localmente (TACO)' : 'Plano gerado com a base TACO 🇧🇷', 'info')
+      toast(n8nConfigured ? 'IA indisponível - plano gerado localmente (TACO)' : 'Plano gerado com a base TACO 🇧🇷', 'info')
     }
     g.setMealPlan(novo)
     setGerando(false)
@@ -42,17 +42,17 @@ export default function Nutricao() {
     if (!plano) return
     const doc = new jsPDF()
     let y = 20
-    doc.setFontSize(22).setTextColor(16, 185, 129).text('FitLevel — Plano Alimentar', 14, y)
+    doc.setFontSize(22).setTextColor(16, 185, 129).text('FitLevel - Plano Alimentar', 14, y)
     y += 8
     doc.setFontSize(11).setTextColor(100).text(`${p.nome} · ${p.idade} anos · Meta: ${p.metaCalorias} kcal/dia · Objetivo: ${p.objetivo.replace('_', ' ')}`, 14, y)
     y += 10
     for (const r of plano.refeicoes) {
       if (y > 260) { doc.addPage(); y = 20 }
-      doc.setFontSize(14).setTextColor(6, 182, 212).text(`${r.nome} — ${r.horario}`, 14, y)
+      doc.setFontSize(14).setTextColor(6, 182, 212).text(`${r.nome} - ${r.horario}`, 14, y)
       y += 7
       doc.setFontSize(10).setTextColor(40)
       for (const item of r.itens) {
-        doc.text(`• ${item.alimento} (${item.qtd}) — ${item.kcal} kcal · P ${item.prot}g · C ${item.carb}g · G ${item.gord}g`, 18, y)
+        doc.text(`• ${item.alimento} (${item.qtd}) - ${item.kcal} kcal · P ${item.prot}g · C ${item.carb}g · G ${item.gord}g`, 18, y)
         y += 6
       }
       y += 4

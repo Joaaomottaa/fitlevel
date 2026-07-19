@@ -1,5 +1,5 @@
 /**
- * Mini base nutricional por 100g — valores da Tabela TACO (UNICAMP) e OpenFoodFacts.
+ * Mini base nutricional por 100g - valores da Tabela TACO (UNICAMP) e OpenFoodFacts.
  * Usada pelo chat, pelo plano alimentar local e como contexto para a IA no n8n.
  */
 export interface Alimento {

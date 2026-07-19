@@ -35,7 +35,7 @@ const DESAFIOS_INICIAIS: Desafio[] = [
     status: 'aguardando', dias: 30,
   },
   {
-    id: uid(), codigo: gerarCodigo(), nome: 'Corrida de streak — quem aguenta mais?', tipo: 'moedas', valor: 100,
+    id: uid(), codigo: gerarCodigo(), nome: 'Corrida de streak - quem aguenta mais?', tipo: 'moedas', valor: 100,
     participantes: [
       { nome: 'Você', pago: true, pontos: 12 },
       { nome: 'Fê', pago: true, pontos: 9 },
@@ -48,8 +48,12 @@ const DESAFIOS_INICIAIS: Desafio[] = [
 export default function Competicoes() {
   const g = useGame()
   const toast = useToast((s) => s.push)
-  const [desafios, setDesafios] = useState(DESAFIOS_INICIAIS)
+  const userId = g.userId
+  const remoto = supabaseConfigured && !!userId && userId !== 'demo'
+  const [desafios, setDesafios] = useState<Desafio[]>(remoto ? [] : DESAFIOS_INICIAIS)
+  const [carregando, setCarregando] = useState(remoto)
   const [criando, setCriando] = useState(false)
+  const [salvando, setSalvando] = useState(false)
   const [nome, setNome] = useState('')
   const [tipo, setTipo] = useState<'diversao' | 'moedas' | 'pix'>('diversao')
   const [valor, setValor] = useState(10)
@@ -57,6 +61,33 @@ export default function Competicoes() {
   const [codigoCriado, setCodigoCriado] = useState<string | null>(null)
   const [entrando, setEntrando] = useState(false)
   const [codigoDigitado, setCodigoDigitado] = useState('')
+
+  const meuNome = g.profile?.nome.split(' ')[0] || 'Você'
+
+  const recarregar = async () => {
+    if (!remoto || !userId) return
+    const dados = await fetchMeusDesafios(userId)
+    if (!dados) return
+    setDesafios(dados.map(({ desafio: d, participantes }) => ({
+      id: d.id,
+      codigo: d.codigo,
+      nome: d.nome,
+      tipo: d.tipo,
+      valor: Number(d.valor),
+      maxParticipantes: d.max_participantes,
+      status: d.status,
+      dias: d.dias,
+      participantes: participantes.map((p) => ({ nome: p.user_id === userId ? 'Você' : p.nome, pago: p.pago, pontos: p.pontos })),
+    })))
+  }
+
+  useEffect(() => {
+    if (!remoto) return
+    setCarregando(true)
+    recarregar().finally(() => setCarregando(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoto, userId])
+
   if (!g.profile) return null
 
   const fecharCriacao = () => {
@@ -68,7 +99,30 @@ export default function Competicoes() {
     setQtdParticipantes(4)
   }
 
-  const criar = () => {
+  const criar = async () => {
+    if (!nome.trim()) return
+    if (remoto && userId) {
+      setSalvando(true)
+      let desafioId: string | null = null
+      let codigo = ''
+      for (let tentativa = 0; tentativa < 3 && !desafioId; tentativa++) {
+        codigo = gerarCodigo()
+        desafioId = await criarDesafioRemoto({
+          codigo, nome, tipo, valor: tipo === 'diversao' ? 0 : valor,
+          max_participantes: qtdParticipantes, dias: 30, criado_por: userId,
+        })
+      }
+      if (!desafioId) {
+        setSalvando(false)
+        toast('Não foi possível criar o desafio. Tente novamente.', 'erro')
+        return
+      }
+      await entrarParticipanteRemoto(desafioId, userId, meuNome, tipo !== 'pix')
+      await recarregar()
+      setSalvando(false)
+      setCodigoCriado(codigo)
+      return
+    }
     const codigo = gerarCodigo()
     setDesafios((prev) => [{
       id: uid(), codigo, nome, tipo, valor: tipo === 'diversao' ? 0 : valor,
@@ -79,9 +133,31 @@ export default function Competicoes() {
     setCodigoCriado(codigo)
   }
 
-  const entrar = () => {
+  const entrar = async () => {
     const codigo = codigoDigitado.trim().toUpperCase()
     if (!codigo) return
+    if (remoto && userId) {
+      setSalvando(true)
+      const desafio = await buscarDesafioPorCodigo(codigo)
+      if (!desafio) {
+        setSalvando(false)
+        toast('Código não encontrado. Confira e tente novamente.', 'erro')
+        return
+      }
+      const res = await entrarParticipanteRemoto(desafio.id, userId, meuNome, desafio.tipo !== 'pix')
+      setSalvando(false)
+      if (!res.ok) {
+        if (res.motivo === 'duplicado') toast('Você já está nesse desafio.', 'info')
+        else if (res.motivo === 'completo') toast('Esse desafio já está completo.', 'erro')
+        else toast('Não foi possível entrar no desafio. Tente novamente.', 'erro')
+        return
+      }
+      await recarregar()
+      toast('🎉 Você entrou no desafio!')
+      setEntrando(false)
+      setCodigoDigitado('')
+      return
+    }
     const desafio = desafios.find((d) => d.codigo === codigo)
     if (!desafio) {
       toast('Código não encontrado. Confira e tente novamente.', 'erro')
@@ -115,6 +191,18 @@ export default function Competicoes() {
           <button className="btn-primary flex-1" onClick={() => setCriando(true)}>➕ Criar desafio</button>
           <button className="btn-ghost flex-1" onClick={() => setEntrando(true)}>🔑 Entrar com código</button>
         </div>
+
+        {carregando && (
+          <p className="text-center text-sm font-bold text-slate-400 py-6">Carregando seus desafios…</p>
+        )}
+
+        {!carregando && remoto && desafios.length === 0 && (
+          <div className="card text-center py-8">
+            <p className="text-3xl mb-2">⚔️</p>
+            <p className="font-black">Nenhum desafio ainda</p>
+            <p className="text-xs font-bold text-slate-400 mt-1">Crie um desafio ou entre com o código de um amigo.</p>
+          </div>
+        )}
 
         {desafios.map((d) => {
           const pagos = d.participantes.filter((p) => p.pago).length
@@ -169,7 +257,7 @@ export default function Competicoes() {
                   <p className="text-xs font-bold text-slate-400">
                     💡 O valor fica <b>bloqueado</b> até o fim. Quando todos pagarem, o desafio inicia automaticamente e o vencedor recebe via PIX.
                   </p>
-                  <p className="text-[10px] font-black text-amber-500 mt-1">[SIMULAÇÃO — integração Mercado Pago no roadmap]</p>
+                  <p className="text-[10px] font-black text-amber-500 mt-1">[SIMULAÇÃO - integração Mercado Pago no roadmap]</p>
                 </div>
               )}
 
@@ -234,8 +322,8 @@ export default function Competicoes() {
             {tipo === 'pix' && g.profile.plano !== 'premium' && (
               <p className="text-xs font-black text-amber-500 mt-2">⭐ Desafios com PIX real são exclusivos do Premium</p>
             )}
-            <button className="btn-primary w-full mt-4" disabled={!nome || (tipo === 'pix' && g.profile.plano !== 'premium')} onClick={criar}>
-              Criar e gerar código
+            <button className="btn-primary w-full mt-4" disabled={!nome || salvando || (tipo === 'pix' && g.profile.plano !== 'premium')} onClick={criar}>
+              {salvando ? 'Criando…' : 'Criar e gerar código'}
             </button>
           </>
         )}
@@ -251,8 +339,8 @@ export default function Competicoes() {
           placeholder="EX.: A1B2C3"
           maxLength={6}
         />
-        <button className="btn-primary w-full mt-4" disabled={!codigoDigitado.trim()} onClick={entrar}>
-          Entrar no desafio
+        <button className="btn-primary w-full mt-4" disabled={!codigoDigitado.trim() || salvando} onClick={entrar}>
+          {salvando ? 'Entrando…' : 'Entrar no desafio'}
         </button>
       </Modal>
     </div>

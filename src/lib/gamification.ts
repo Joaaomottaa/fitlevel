@@ -2,7 +2,7 @@ import type { CheckinAnswers, DailyCheckin } from '@/types'
 import { clamp } from './utils'
 
 /**
- * SCORE DIÁRIO (0–100) — a lógica central exigida pelo desafio.
+ * SCORE DIÁRIO (0–100) - a lógica central exigida pelo desafio.
  * sono 25 · hidratação 15 · exercício 25 · alimentação 25 · bem-estar 10
  */
 export function calcDailyScore(a: CheckinAnswers, metaAguaMl: number): number {
@@ -61,7 +61,7 @@ export function healthScore(checkins: Record<string, DailyCheckin>, inicial: num
 }
 
 /**
- * ESTÁGIOS DE EVOLUÇÃO DO AVATAR — tempo + consistência.
+ * ESTÁGIOS DE EVOLUÇÃO DO AVATAR - tempo + consistência.
  * O avatar nunca regride de corpo (empatia retém; vergonha desengaja).
  */
 const STAGES: { estagio: 1 | 2 | 3 | 4 | 5; dia: number; media: number }[] = [
@@ -118,10 +118,10 @@ export function humorFromScore(score: number): 'feliz' | 'neutro' | 'triste' | '
 export function feedbackLocal(score: number, streak: number, nome: string): string {
   const primeiro = nome.split(' ')[0]
   if (score >= 85)
-    return `${primeiro}, dia impecável! 🔥 Score ${score} — seu avatar está radiante. Streak de ${streak} ${streak === 1 ? 'dia' : 'dias'}!`
+    return `${primeiro}, dia impecável! 🔥 Score ${score} - seu avatar está radiante. Streak de ${streak} ${streak === 1 ? 'dia' : 'dias'}!`
   if (score >= 65)
-    return `Ótimo trabalho, ${primeiro}! Score ${score}. Consistência constrói transformação — continue amanhã!`
+    return `Ótimo trabalho, ${primeiro}! Score ${score}. Consistência constrói transformação - continue amanhã!`
   if (score >= 45)
     return `Dia ok, ${primeiro}. Score ${score}. Que tal caprichar na água e no sono amanhã? Seu avatar acredita em você!`
-  return `${primeiro}, dias difíceis acontecem. 💙 Score ${score}. Amanhã é uma página nova — seu avatar continua ao seu lado.`
+  return `${primeiro}, dias difíceis acontecem. 💙 Score ${score}. Amanhã é uma página nova - seu avatar continua ao seu lado.`
 }

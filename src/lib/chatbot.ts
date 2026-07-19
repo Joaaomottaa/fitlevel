@@ -3,7 +3,7 @@ import { buscarAlimento, TACO } from '@/data/taco'
 import { classificaIMC } from './health'
 
 /**
- * Chatbot local (fallback) — responde com base na TACO e no perfil.
+ * Chatbot local (fallback) - responde com base na TACO e no perfil.
  * Quando o n8n está configurado, a resposta vem da IA com este mesmo contexto.
  */
 export function respostaLocal(pergunta: string, perfil: Profile | null): string {
@@ -14,7 +14,7 @@ export function respostaLocal(pergunta: string, perfil: Profile | null): string 
     for (const a of TACO) {
       const chave = a.nome.toLowerCase().split(' ')[0]
       if (chave.length > 3 && q.includes(chave)) {
-        return `${a.nome} tem ${a.kcal} kcal por 100g — ${a.prot}g de proteína, ${a.carb}g de carboidratos, ${a.gord}g de gorduras e ${a.fibra}g de fibras (fonte: Tabela TACO/UNICAMP). 🍽️`
+        return `${a.nome} tem ${a.kcal} kcal por 100g - ${a.prot}g de proteína, ${a.carb}g de carboidratos, ${a.gord}g de gorduras e ${a.fibra}g de fibras (fonte: Tabela TACO/UNICAMP). 🍽️`
       }
     }
   }
@@ -27,20 +27,20 @@ export function respostaLocal(pergunta: string, perfil: Profile | null): string 
   if (q.includes('proteína') || q.includes('proteina')) {
     const meta = perfil ? Math.round(perfil.pesoAtual * 1.8) : null
     return meta
-      ? `Para o seu peso (${perfil!.pesoAtual}kg) e objetivo, a recomendação geral é de 1,6 a 2,2g de proteína por kg — cerca de ${meta}g/dia. Boas fontes: frango, ovos, tilápia, whey e leguminosas. 💪`
+      ? `Para o seu peso (${perfil!.pesoAtual}kg) e objetivo, a recomendação geral é de 1,6 a 2,2g de proteína por kg - cerca de ${meta}g/dia. Boas fontes: frango, ovos, tilápia, whey e leguminosas. 💪`
       : 'A recomendação geral é de 1,6 a 2,2g de proteína por kg de peso corporal para quem treina. Complete seu perfil para eu personalizar!'
   }
 
   if (q.includes('imc')) {
     if (perfil) {
       const c = classificaIMC(perfil.imc)
-      return `IMC = peso ÷ altura². O seu é ${perfil.imc} (${c.rotulo}). Ele é um indicador de triagem — massa muscular e circunferência abdominal completam a foto. 📏`
+      return `IMC = peso ÷ altura². O seu é ${perfil.imc} (${c.rotulo}). Ele é um indicador de triagem - massa muscular e circunferência abdominal completam a foto. 📏`
     }
     return 'IMC = peso (kg) ÷ altura² (m). Ex.: 80kg e 1,75m → 80 ÷ 3,06 = 26,1 (sobrepeso leve).'
   }
 
   if (q.includes('sono') || q.includes('dormir')) {
-    return 'Para melhorar o sono: horários fixos (mesmo no fim de semana), zero telas 1h antes, quarto escuro e fresco, cafeína só até 14h e exercício regular — mas não perto da hora de deitar. 😴'
+    return 'Para melhorar o sono: horários fixos (mesmo no fim de semana), zero telas 1h antes, quarto escuro e fresco, cafeína só até 14h e exercício regular - mas não perto da hora de deitar. 😴'
   }
 
   if (q.includes('emagrecer') || q.includes('perder peso') || q.includes('treino')) {
@@ -57,7 +57,7 @@ export function respostaLocal(pergunta: string, perfil: Profile | null): string 
     return `${alimento.nome}: ${alimento.kcal} kcal, ${alimento.prot}g proteína, ${alimento.carb}g carboidrato, ${alimento.gord}g gordura por 100g (TACO/UNICAMP).`
   }
 
-  return 'Posso te ajudar com calorias de alimentos, metas de proteína e água, IMC, sono, treino e hábitos! Experimente: "Quantas calorias tem 100g de arroz?" 🤖\n\n⚠️ Sou um assistente informativo — não substituo médico ou nutricionista.'
+  return 'Posso te ajudar com calorias de alimentos, metas de proteína e água, IMC, sono, treino e hábitos! Experimente: "Quantas calorias tem 100g de arroz?" 🤖\n\n⚠️ Sou um assistente informativo - não substituo médico ou nutricionista.'
 }
 
 export const SUGESTOES_CHAT = [

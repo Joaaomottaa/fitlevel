@@ -27,7 +27,7 @@ export default function Onboarding() {
   const nav = useNavigate()
   const [passo, setPasso] = useState(1)
 
-  // etapa 1 — identidade
+  // etapa 1 - identidade
   const [nome, setNome] = useState(user?.nome ?? '')
   const [sexo, setSexo] = useState<Sexo>('M')
   const [idade, setIdade] = useState(30)
@@ -35,20 +35,20 @@ export default function Onboarding() {
   const [peso, setPeso] = useState(80)
   const [pesoMeta, setPesoMeta] = useState(75)
   const [circAbd, setCircAbd] = useState(0)
-  // etapa 2 — objetivo e atividade
+  // etapa 2 - objetivo e atividade
   const [objetivo, setObjetivo] = useState<Objetivo>('perder_peso')
   const [atividade, setAtividade] = useState(1.375)
   const [freqEx, setFreqEx] = useState('1-2x por semana')
   const [tipoTreino, setTipoTreino] = useState('Nenhum')
-  // etapa 3 — sono e água
+  // etapa 3 - sono e água
   const [sonoHoras, setSonoHoras] = useState(7)
   const [horarioSono, setHorarioSono] = useState('23:00')
   const [agua, setAgua] = useState(1.5)
-  // etapa 4 — alimentação e vícios
+  // etapa 4 - alimentação e vícios
   const [habitos, setHabitos] = useState<'ruim' | 'medio' | 'bom'>('medio')
   const [alcool, setAlcool] = useState<'nunca' | 'social' | 'frequente'>('social')
   const [fumante, setFumante] = useState(false)
-  // etapa 5 — clínico
+  // etapa 5 - clínico
   const [doencas, setDoencas] = useState<string[]>([])
   const [historico, setHistorico] = useState<string[]>([])
   const [alergias, setAlergias] = useState('')
@@ -58,7 +58,7 @@ export default function Onboarding() {
   const [pressao, setPressao] = useState<'normal' | 'alta' | 'nao_sei'>('nao_sei')
   const [glicemia, setGlicemia] = useState<'normal' | 'alta' | 'nao_sei'>('nao_sei')
   const [pctGordura, setPctGordura] = useState('')
-  // etapa 6 — avatar
+  // etapa 6 - avatar
   const [avatar, setAvatar] = useState<AvatarConfig>(DEFAULT_AVATAR(1))
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
   const [analisando, setAnalisando] = useState(false)
@@ -132,7 +132,7 @@ export default function Onboarding() {
     } else {
       // fallback local: heurística simples sem IA
       setAvatar((a) => ({ ...a, hair: sexo === 'F' ? 'longo' : 'curto' }))
-      toast(n8nConfigured ? 'IA indisponível — ajuste manualmente' : 'n8n não configurado — ajuste o avatar manualmente', 'info')
+      toast(n8nConfigured ? 'IA indisponível - ajuste manualmente' : 'n8n não configurado - ajuste o avatar manualmente', 'info')
     }
   }
 
@@ -159,7 +159,7 @@ export default function Onboarding() {
             {passo === 1 && 'Oi! Sou seu guia FitLevel. Vamos nos conhecer? Esses dados calculam seus indicadores de saúde.'}
             {passo === 2 && 'Qual é a sua missão? Isso define suas metas de calorias e treino.'}
             {passo === 3 && 'Sono e água são 40% do seu score diário. Como está sua rotina hoje?'}
-            {passo === 4 && 'Sem julgamentos — quanto mais sincero, melhor seu plano. 🤝'}
+            {passo === 4 && 'Sem julgamentos - quanto mais sincero, melhor seu plano. 🤝'}
             {passo === 5 && 'Agora a parte clínica. Se não souber algum valor, sem problema!'}
             {passo === 6 && 'Hora do momento mágico: envie uma foto e a IA cria um avatar com a sua cara! 📸'}
           </div>
@@ -183,9 +183,9 @@ export default function Onboarding() {
               <div><span className="label">Peso atual: <b className="text-emerald-500">{peso}kg</b></span><input type="range" min={35} max={200} value={peso} onChange={(e) => setPeso(+e.target.value)} /></div>
               <div><span className="label">Peso desejado: <b className="text-cyan-500">{pesoMeta}kg</b></span><input type="range" min={35} max={200} value={pesoMeta} onChange={(e) => setPesoMeta(+e.target.value)} /></div>
             </div>
-            <div><span className="label">Circunferência abdominal (cm) — opcional</span><input className="input" type="number" value={circAbd || ''} onChange={(e) => setCircAbd(+e.target.value)} placeholder="Ex.: 95" /></div>
+            <div><span className="label">Circunferência abdominal (cm) - opcional</span><input className="input" type="number" value={circAbd || ''} onChange={(e) => setCircAbd(+e.target.value)} placeholder="Ex.: 95" /></div>
             <div className="card !p-3 text-center text-sm font-bold">
-              Seu IMC: <span style={{ color: imcInfo.cor }} className="font-black">{imc} — {imcInfo.rotulo}</span>
+              Seu IMC: <span style={{ color: imcInfo.cor }} className="font-black">{imc} - {imcInfo.rotulo}</span>
             </div>
             <button className="btn-primary" disabled={!nome} onClick={() => setPasso(2)}>Continuar</button>
           </Passo>
@@ -200,7 +200,7 @@ export default function Onboarding() {
             </div>
             <div><span className="label">Nível de atividade física</span>
               <div className="flex flex-col gap-2">
-                {([[1.2, 'Sedentário — trabalho sentado, sem exercício'], [1.375, 'Leve — exercício 1-3x/semana'], [1.55, 'Moderado — exercício 3-5x/semana'], [1.725, 'Intenso — exercício 6-7x/semana'], [1.9, 'Atleta — 2x por dia']] as [number, string][]).map(([v, l]) => (
+                {([[1.2, 'Sedentário - trabalho sentado, sem exercício'], [1.375, 'Leve - exercício 1-3x/semana'], [1.55, 'Moderado - exercício 3-5x/semana'], [1.725, 'Intenso - exercício 6-7x/semana'], [1.9, 'Atleta - 2x por dia']] as [number, string][]).map(([v, l]) => (
                   <button key={v} className={cn('chip justify-start', atividade === v && 'chip-active')} onClick={() => setAtividade(v)}>{l}</button>
                 ))}
               </div>

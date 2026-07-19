@@ -15,7 +15,7 @@ export function classificaIMC(imc: number): { rotulo: string; cor: string } {
   return { rotulo: 'Obesidade III', cor: '#dc2626' }
 }
 
-/** TMB por Mifflin-St Jeor — mais precisa que Harris-Benedict */
+/** TMB por Mifflin-St Jeor - mais precisa que Harris-Benedict */
 export function calcTMB(sexo: string, pesoKg: number, alturaCm: number, idade: number): number {
   const base = 10 * pesoKg + 6.25 * alturaCm - 5 * idade
   return Math.round(sexo === 'F' ? base - 161 : base + 5)
@@ -88,14 +88,14 @@ export function calcRiskFactors(p: Profile): RiskFactor[] {
     nivel: p.fumante ? 4 : 0,
     dica: p.fumante
       ? 'Parar de fumar é a ação de maior impacto na sua saúde. Busque apoio!'
-      : 'Livre do cigarro — excelente para coração e pulmões.',
+      : 'Livre do cigarro - excelente para coração e pulmões.',
   })
   const sedNivel = p.nivelAtividade <= 1.25 ? 3 : p.nivelAtividade <= 1.45 ? 2 : p.nivelAtividade <= 1.6 ? 1 : 0
   out.push({
     nome: 'Atividade física',
     icone: '🏃',
     nivel: sedNivel,
-    dica: sedNivel > 1 ? 'Comece com 20 min de caminhada por dia — as missões vão te guiar.' : 'Bom nível de movimento!',
+    dica: sedNivel > 1 ? 'Comece com 20 min de caminhada por dia - as missões vão te guiar.' : 'Bom nível de movimento!',
   })
   const sonoNivel = p.sonoHoras >= 7.5 ? 0 : p.sonoHoras >= 7 ? 1 : p.sonoHoras >= 6 ? 2 : 3
   out.push({
@@ -123,7 +123,7 @@ export function calcRiskFactors(p: Profile): RiskFactor[] {
     nome: 'Álcool',
     icone: '🍺',
     nivel: alcNivel,
-    dica: alcNivel > 1 ? 'Reduza a frequência — álcool atrapalha sono, treino e emagrecimento.' : 'Consumo sob controle.',
+    dica: alcNivel > 1 ? 'Reduza a frequência - álcool atrapalha sono, treino e emagrecimento.' : 'Consumo sob controle.',
   })
   return out
 }

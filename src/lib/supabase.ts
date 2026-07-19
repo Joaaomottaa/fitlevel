@@ -118,6 +118,24 @@ export async function fetchMeusDesafios(userId: string): Promise<{ desafio: Desa
   }
 }
 
+/** Busca um usuário real pelo código de amizade (coluna codigo_amigo) */
+export async function buscarPorCodigo(
+  codigo: string,
+): Promise<{ id: string; nome: string; xp: number; score: number } | null> {
+  if (!supabase) return null
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, nome, xp, health_score')
+      .eq('codigo_amigo', codigo)
+      .maybeSingle()
+    if (error || !data) return null
+    return { id: data.id, nome: data.nome || 'Atleta FitLevel', xp: data.xp ?? 0, score: data.health_score ?? 0 }
+  } catch {
+    return null
+  }
+}
+
 export async function fetchLeaderboard(): Promise<{ nome: string; xp: number; nivel: number; score: number }[] | null> {
   if (!supabase) return null
   try {

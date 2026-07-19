@@ -114,6 +114,11 @@ export interface ShopItem {
   emoji: string
 }
 
+export interface Comentario {
+  autor: string
+  texto: string
+}
+
 export interface FeedPost {
   id: string
   autor: string
@@ -123,6 +128,17 @@ export interface FeedPost {
   likes: number
   liked: boolean
   quando: string
+  comentarios?: Comentario[]
+  compartilhado?: boolean
+}
+
+export interface Amigo {
+  id: string
+  nome: string
+  codigo: string
+  emoji: string
+  xp: number
+  score: number
 }
 
 export interface ChatMsg {

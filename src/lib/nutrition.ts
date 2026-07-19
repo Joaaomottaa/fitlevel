@@ -61,7 +61,7 @@ export function gerarPlanoLocal(
       `Beba ${(perfil.metaAguaMl / 1000).toFixed(1)}L de água por dia.`,
       'Priorize comida de verdade; deixe ultraprocessados para exceções.',
       perfil.objetivo === 'perder_peso'
-        ? 'Mantenha o déficit de ~400 kcal — perda saudável de 0,5kg/semana.'
+        ? 'Mantenha o déficit de ~400 kcal - perda saudável de 0,5kg/semana.'
         : 'Proteína distribuída ao longo do dia otimiza a síntese muscular.',
       'Este plano é uma sugestão gerada por algoritmo e não substitui um nutricionista.',
     ],

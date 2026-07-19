@@ -28,6 +28,11 @@ export function uid() {
   return Math.random().toString(36).slice(2, 10)
 }
 
+/** Código de amizade derivado do id do usuário (mesma regra do trigger SQL) */
+export function codigoAmigoDe(userId: string): string {
+  return `FL-${userId.replace(/-/g, '').slice(0, 6).toUpperCase()}`
+}
+
 export function fmtNum(n: number, digits = 0) {
   return n.toLocaleString('pt-BR', { maximumFractionDigits: digits, minimumFractionDigits: digits })
 }

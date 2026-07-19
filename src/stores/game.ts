@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AvatarConfig, CheckinAnswers, ChatMsg, DailyCheckin, EvolucaoFoto, FeedPost, MealPlan, Profile } from '@/types'
+import type { Amigo, AvatarConfig, CheckinAnswers, ChatMsg, Comentario, DailyCheckin, EvolucaoFoto, FeedPost, MealPlan, Profile } from '@/types'
 import {
   avgScore,
   calcDailyScore,
@@ -16,8 +16,8 @@ import {
 import { calcIMC } from '@/lib/health'
 import { ACHIEVEMENTS } from '@/data/achievements'
 import { SHOP_ITEMS } from '@/data/shop'
-import { addDaysISO, diffDays, todayISO, uid } from '@/lib/utils'
-import { syncCheckin, syncProfile } from '@/lib/supabase'
+import { addDaysISO, codigoAmigoDe, diffDays, todayISO, uid } from '@/lib/utils'
+import { buscarPorCodigo, supabaseConfigured, syncCheckin, syncProfile } from '@/lib/supabase'
 
 export interface CheckinResult {
   score: number
@@ -46,6 +46,8 @@ interface GameState {
   mealPlan: MealPlan | null
   feed: FeedPost[]
   evolucaoFotos: EvolucaoFoto[]
+  amigos: Amigo[]
+  comentarios: Record<string, Comentario[]>
 
   // helpers
   hoje: () => string
@@ -72,6 +74,9 @@ interface GameState {
   removeEvolucaoFoto: (id: string) => void
   toggleLike: (postId: string) => void
   addFeed: (tipo: FeedPost['tipo'], texto: string) => void
+  addComentario: (postId: string, autor: string, texto: string) => void
+  addAmigo: (codigo: string) => Promise<Amigo | { erro: string }>
+  removeAmigo: (id: string) => void
   resetAll: () => void
 }
 
@@ -91,6 +96,17 @@ const fresh = {
   mealPlan: null as MealPlan | null,
   feed: [] as FeedPost[],
   evolucaoFotos: [] as EvolucaoFoto[],
+  amigos: [] as Amigo[],
+  comentarios: {} as Record<string, Comentario[]>,
+}
+
+const EMOJIS_AMIGOS = ['🏃‍♀️', '🏋️', '🧘‍♀️', '🚴', '⚽', '🤸', '🏊', '🥊', '🏄', '🧗']
+
+/** Contas de teste do modo demo/offline - códigos válidos sem Supabase */
+const DEMO_DIRECTORY: Record<string, { nome: string; xp: number; score: number }> = {
+  'FL-MARINA': { nome: 'Marina Silva', xp: 4820, score: 82 },
+  'FL-CARLOS': { nome: 'Carlos Eduardo', xp: 3910, score: 74 },
+  'FL-JULIA': { nome: 'Julia Prado', xp: 2650, score: 79 },
 }
 
 export const useGame = create<GameState>()(
@@ -156,7 +172,7 @@ export const useGame = create<GameState>()(
         const estagioDepois = get().estagioAtual()
         if (s.avatar && estagioDepois !== estagioAntes) {
           set({ avatar: { ...get().avatar!, estagio: estagioDepois } })
-          get().addFeed('evolucao', `evoluiu para o estágio ${estagioDepois} — ${['', 'Início', 'Despertar', 'Transformação', 'Boa forma', 'Campeão'][estagioDepois]}! 🎉`)
+          get().addFeed('evolucao', `evoluiu para o estágio ${estagioDepois} - ${['', 'Início', 'Despertar', 'Transformação', 'Boa forma', 'Campeão'][estagioDepois]}! 🎉`)
         }
         syncCheckin({ user_id: s.userId, data, ...toSnake(answers), score })
         pushSync(get)
@@ -200,6 +216,7 @@ export const useGame = create<GameState>()(
         if (!item || s.itens.includes(itemId) || s.moedas < item.preco) return false
         if (item.premium && s.profile?.plano !== 'premium') return false
         set({ moedas: s.moedas - item.preco, itens: [...s.itens, itemId] })
+        unlockAchievements(set, get)
         return true
       },
 
@@ -224,19 +241,35 @@ export const useGame = create<GameState>()(
         const hoje = s.hoje()
         if (s.roletaUltima === hoje) return null
         const premios = [
+          { tipo: 'moedas', valor: 10, rotulo: '+10 moedas' },
           { tipo: 'moedas', valor: 20, rotulo: '+20 moedas' },
           { tipo: 'moedas', valor: 50, rotulo: '+50 moedas' },
+          { tipo: 'moedas', valor: 80, rotulo: 'Bolsa de moedas +80' },
           { tipo: 'xp', valor: 30, rotulo: '+30 XP' },
           { tipo: 'xp', valor: 100, rotulo: '+100 XP' },
-          { tipo: 'moedas', valor: 10, rotulo: '+10 moedas' },
           { tipo: 'xp', valor: 250, rotulo: 'JACKPOT +250 XP' },
+          { tipo: 'item', valor: 0, rotulo: '' },
         ]
-        const premio = premios[Math.floor(Math.random() * premios.length)]
+        let premio = premios[Math.floor(Math.random() * premios.length)]
+        let itens = s.itens
+        if (premio.tipo === 'item') {
+          // sorteia um item da loja que o usuário ainda não tem (não-premium)
+          const disponiveis = SHOP_ITEMS.filter((i) => !s.itens.includes(i.id) && !i.premium && i.preco > 0)
+          if (disponiveis.length) {
+            const ganho = disponiveis[Math.floor(Math.random() * disponiveis.length)]
+            itens = [...s.itens, ganho.id]
+            premio = { tipo: 'item', valor: 0, rotulo: `Item surpresa: ${ganho.nome}!` }
+          } else {
+            premio = { tipo: 'moedas', valor: 100, rotulo: 'Coleção completa! +100 moedas' }
+          }
+        }
         set({
           roletaUltima: hoje,
+          itens,
           xp: premio.tipo === 'xp' ? s.xp + premio.valor : s.xp,
           moedas: premio.tipo === 'moedas' ? s.moedas + premio.valor : s.moedas,
         })
+        unlockAchievements(set, get)
         return premio
       },
 
@@ -297,6 +330,48 @@ export const useGame = create<GameState>()(
         })
       },
 
+      addComentario: (postId, autor, texto) => {
+        const s = get()
+        const atual = s.comentarios[postId] ?? []
+        set({ comentarios: { ...s.comentarios, [postId]: [...atual, { autor, texto }] } })
+      },
+
+      addAmigo: async (codigoRaw) => {
+        const codigo = codigoRaw.trim().toUpperCase()
+        const s = get()
+        if (!/^FL-[A-Z0-9]{4,10}$/.test(codigo)) {
+          return { erro: 'Formato inválido - o código tem o formato FL-A1B2C3.' }
+        }
+        if (codigo === codigoAmigoDe(s.userId ?? 'DEMO')) return { erro: 'Esse é o seu próprio código 😄' }
+        if (s.amigos.some((a) => a.codigo === codigo)) return { erro: 'Vocês já são amigos!' }
+
+        // busca o dono do código: Supabase (contas reais) ou diretório demo
+        let dados: { id: string; nome: string; xp: number; score: number } | null = null
+        if (supabaseConfigured && s.userId && s.userId !== 'demo') {
+          dados = await buscarPorCodigo(codigo)
+        } else if (DEMO_DIRECTORY[codigo]) {
+          dados = { id: `demo-${codigo}`, ...DEMO_DIRECTORY[codigo] }
+        }
+        if (!dados) return { erro: 'Código inválido - nenhum usuário encontrado com esse código.' }
+        if (dados.id === s.userId) return { erro: 'Esse é o seu próprio código 😄' }
+        if (s.amigos.some((a) => a.id === dados.id)) return { erro: 'Vocês já são amigos!' }
+
+        const seed = [...codigo].reduce((n, c) => n + c.charCodeAt(0), 0)
+        const amigo: Amigo = {
+          id: dados.id,
+          nome: dados.nome,
+          codigo,
+          emoji: EMOJIS_AMIGOS[seed % EMOJIS_AMIGOS.length],
+          xp: dados.xp,
+          score: dados.score,
+        }
+        set({ amigos: [amigo, ...get().amigos] })
+        unlockAchievements(set, get)
+        return amigo
+      },
+
+      removeAmigo: (id) => set({ amigos: get().amigos.filter((a) => a.id !== id) }),
+
       resetAll: () => set({ ...fresh }),
     }),
     { name: 'fitlevel-game-v1' },
@@ -308,6 +383,7 @@ export const useGame = create<GameState>()(
 function unlockAchievements(
   set: (partial: Partial<GameState>) => void,
   get: () => GameState,
+  silencioso = false,
 ): string[] {
   const s = get()
   if (!s.profile) return []
@@ -318,33 +394,54 @@ function unlockAchievements(
   const nivel = levelFromXp(s.xp)
   const perdido = s.profile.pesoInicial - s.profile.pesoAtual
   const media7 = avgScore(s.checkins, 7, s.hoje())
+  const media30 = avgScore(s.checkins, 30, s.hoje())
   const estagio = s.estagioAtual()
   const dia = s.diaJornada()
   const nMissoes = Object.values(s.missoesFeitas).flat().length
   const scoreHoje = s.checkins[s.hoje()]?.score ?? 0
   const treinosSeguidos = contarTreinosSeguidos(s.checkins, s.hoje())
+  const diasSonoBom = Object.values(s.checkins).filter((c) => c.sonoHoras >= 7.5).length
+  const diasAguaOk = Object.values(s.checkins).filter((c) => c.aguaMl >= s.profile!.metaAguaMl).length
+  const metaPesoBatida =
+    s.profile.objetivo === 'ganhar_massa'
+      ? s.profile.pesoAtual >= s.profile.pesoMeta
+      : s.profile.objetivo === 'perder_peso'
+        ? s.profile.pesoAtual <= s.profile.pesoMeta
+        : Math.abs(s.profile.pesoAtual - s.profile.pesoMeta) <= 0.5
 
   const regras: [string, boolean][] = [
     ['primeiro-checkin', nCheckins >= 1],
     ['primeira-missao', nMissoes >= 1],
     ['primeira-semana', dia >= 7],
     ['primeiro-mes', dia >= 30],
+    ['meio-caminho', dia >= 50],
     ['streak-3', streak >= 3],
     ['streak-7', streak >= 7],
+    ['streak-14', streak >= 14],
     ['streak-30', streak >= 30],
+    ['streak-50', streak >= 50],
     ['streak-100', streak >= 100],
+    ['checkin-50', nCheckins >= 50],
     ['score-100', scoreHoje >= 100],
     ['score-80-7d', media7 >= 80 && nCheckins >= 7],
+    ['score-90-30d', media30 >= 90 && nCheckins >= 30],
     ['peso-2kg', perdido >= 2],
     ['peso-5kg', perdido >= 5],
     ['peso-10kg', perdido >= 10],
-    ['sono-15', Object.values(s.checkins).filter((c) => c.sonoHoras >= 7.5).length >= 15],
-    ['agua-30', Object.values(s.checkins).filter((c) => c.aguaMl >= s.profile!.metaAguaMl).length >= 30],
+    ['peso-meta', metaPesoBatida],
+    ['sono-15', diasSonoBom >= 15],
+    ['agua-30', diasAguaOk >= 30],
+    ['agua-60', diasAguaOk >= 60],
     ['treino-5-seguidos', treinosSeguidos >= 5],
     ['nivel-5', nivel >= 5],
     ['nivel-10', nivel >= 10],
+    ['nivel-20', nivel >= 20],
     ['evolucao-3', estagio >= 3],
     ['evolucao-5', estagio >= 5],
+    ['primeiro-amigo', s.amigos.length >= 1],
+    ['rede-social', s.amigos.length >= 5],
+    ['estiloso', s.itens.length >= 4],
+    ['colecionador', s.itens.length >= 8],
   ]
 
   let xpBonus = 0
@@ -356,6 +453,12 @@ function unlockAchievements(
   }
   if (novas.length) {
     set({ conquistas: [...s.conquistas, ...novas], xp: s.xp + xpBonus })
+    if (!silencioso) {
+      for (const id of novas) {
+        const a = ACHIEVEMENTS.find((x) => x.id === id)
+        if (a) get().addFeed('conquista', `desbloqueou "${a.titulo}" (+${a.xp} XP)`)
+      }
+    }
   }
   return novas
 }
@@ -378,6 +481,7 @@ function pushSync(get: () => GameState) {
   syncProfile({
     id: s.userId,
     nome: s.profile.nome,
+    codigo_amigo: codigoAmigoDe(s.userId),
     xp: s.xp,
     nivel: levelFromXp(s.xp),
     moedas: s.moedas,
@@ -504,9 +608,9 @@ function seedDemo(set: (p: Partial<GameState>) => void, get: () => GameState) {
     itens: ['outfit-regata', 'outfit-camiseta', 'outfit-treino', 'acc-bone', 'acc-fone'],
     missoesFeitas: {},
     feed: [
-      { id: uid(), autor: 'Alex', tipo: 'evolucao', texto: 'evoluiu para o estágio 3 — Transformação! 🦋', likes: 12, liked: false, quando: addDaysISO(todayISO(), -5) },
+      { id: uid(), autor: 'Alex', tipo: 'evolucao', texto: 'evoluiu para o estágio 3 - Transformação! 🦋', likes: 12, liked: false, quando: addDaysISO(todayISO(), -5) },
       { id: uid(), autor: 'Alex', tipo: 'conquista', texto: 'desbloqueou "Menos 5kg" 🏆', likes: 8, liked: false, quando: addDaysISO(todayISO(), -9) },
     ],
   })
-  unlockAchievements(set as never, get)
+  unlockAchievements(set as never, get, true)
 }

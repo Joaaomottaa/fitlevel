@@ -1,5 +1,5 @@
 /**
- * Camada de IA orquestrada pelo n8n — o diferencial do projeto.
+ * Camada de IA orquestrada pelo n8n - o diferencial do projeto.
  * Cada função chama um webhook; se o n8n não estiver configurado,
  * o app usa fallbacks locais (o jogo nunca quebra).
  */

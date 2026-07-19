@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useGame } from '@/stores/game'
 
 /**
- * Slider "viagem no tempo" — modo demonstração para o pitch:
+ * Slider "viagem no tempo" - modo demonstração para o pitch:
  * arrasta o dia da jornada e o avatar evolui ao vivo na frente dos jurados.
  */
 export function TimeTravel() {

@@ -51,14 +51,14 @@ export const useAuth = create<AuthState>((set) => ({
   },
 
   register: async (email, senha, nome) => {
-    if (!supabase) return 'Supabase não configurado — use o Modo Demo ou adicione a chave no .env'
+    if (!supabase) return 'Supabase não configurado - use o Modo Demo ou adicione a chave no .env'
     const { error } = await supabase.auth.signUp({ email, password: senha, options: { data: { nome } } })
     if (error) return traduzErro(error.message)
     return null
   },
 
   login: async (email, senha) => {
-    if (!supabase) return 'Supabase não configurado — use o Modo Demo ou adicione a chave no .env'
+    if (!supabase) return 'Supabase não configurado - use o Modo Demo ou adicione a chave no .env'
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
     if (error) return traduzErro(error.message)
     return null
@@ -70,7 +70,7 @@ export const useAuth = create<AuthState>((set) => ({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     })
-    if (error) return 'Google OAuth ainda não configurado no Supabase — use e-mail/senha ou o Modo Demo'
+    if (error) return 'Google OAuth ainda não configurado no Supabase - use e-mail/senha ou o Modo Demo'
     return null
   },
 

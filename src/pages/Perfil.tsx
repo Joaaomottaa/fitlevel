@@ -81,7 +81,7 @@ export default function Perfil() {
         {/* LGPD */}
         <div className="card">
           <p className="font-black mb-1">Seus dados (LGPD)</p>
-          <p className="text-xs font-bold text-slate-400 mb-2">Dados de saúde são sensíveis — você tem controle total.</p>
+          <p className="text-xs font-bold text-slate-400 mb-2">Dados de saúde são sensíveis - você tem controle total.</p>
           <div className="flex gap-2">
             <button
               className="btn-ghost flex-1 text-xs !py-2"

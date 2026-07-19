@@ -1,12 +1,21 @@
 import { useState } from 'react'
 import { useGame } from '@/stores/game'
 import { TopBar, useToast } from '@/components/ui'
-import { ACCESSORIES, AvatarEngine, BEARDS, HAIR_COLORS, HAIR_STYLES, OUTFITS, SKIN_TONES } from '@/components/avatar/AvatarEngine'
+import { ACCESSORIES, AvatarEngine, BEARDS, EYE_STYLES, HAIR_COLORS, HAIR_STYLES, OUTFITS, SKIN_TONES } from '@/components/avatar/AvatarEngine'
+import { Icon } from '@/components/icons'
 import { SHOP_ITEMS } from '@/data/shop'
 import { STAGE_INFO } from '@/lib/gamification'
 import { cn } from '@/lib/utils'
 
-const ABAS = ['Pele', 'Cabelo', 'Barba', 'Roupa', 'Extras'] as const
+const ABAS = ['Pele', 'Cabelo', 'Olhos', 'Barba', 'Roupa', 'Extras'] as const
+
+const EYE_LABEL: Record<string, string> = {
+  padrao: '😊 Padrão',
+  determinado: '😤 Determinado',
+  zen: '😌 Zen',
+  anime: '✨ Anime',
+  estrela: '🤩 Estrelas',
+}
 
 export default function AvatarPage() {
   const g = useGame()
@@ -26,8 +35,8 @@ export default function AvatarPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-400/20 to-emerald-400/10" />
           <div className="relative">
             <AvatarEngine config={a} size={210} />
-            <p className="font-black grad-text">Estágio {a.estagio} — {STAGE_INFO[a.estagio].nome}</p>
-            <p className="text-xs font-bold text-slate-400">O corpo evolui com seus hábitos — o estilo é todo seu.</p>
+            <p className="font-black grad-text">Estágio {a.estagio} - {STAGE_INFO[a.estagio].nome}</p>
+            <p className="text-xs font-bold text-slate-400">O corpo evolui com seus hábitos - o estilo é todo seu.</p>
           </div>
         </div>
 
@@ -69,6 +78,17 @@ export default function AvatarPage() {
           </div>
         )}
 
+        {aba === 'Olhos' && (
+          <div className="card">
+            <span className="label">Expressão do olhar</span>
+            <div className="flex flex-wrap gap-2">
+              {EYE_STYLES.map((e) => (
+                <button key={e} className={cn('chip', (a.eyes || 'padrao') === e && 'chip-active')} onClick={() => g.setAvatar({ eyes: e })}>{EYE_LABEL[e] ?? e}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {aba === 'Barba' && (
           <div className="card">
             <span className="label">Estilo de barba</span>
@@ -90,7 +110,7 @@ export default function AvatarPage() {
                   <button
                     key={id}
                     className={cn('chip justify-center', a.outfit === id && 'chip-active', !liberado && 'opacity-40')}
-                    onClick={() => (liberado ? g.setAvatar({ outfit: id }) : toast('Item bloqueado — compre na Loja! 🛍️', 'info'))}
+                    onClick={() => (liberado ? g.setAvatar({ outfit: id }) : toast('Item bloqueado - compre na Loja! 🛍️', 'info'))}
                   >
                     <span className="w-3 h-3 rounded-full" style={{ background: o.corpo }} />
                     {o.nome} {!liberado && '🔒'}
@@ -112,9 +132,9 @@ export default function AvatarPage() {
                   <button
                     key={acc}
                     className={cn('chip justify-center', a.accessory === acc && 'chip-active', !liberado && 'opacity-40')}
-                    onClick={() => (liberado ? g.setAvatar({ accessory: acc }) : toast('Item bloqueado — compre na Loja! 🛍️', 'info'))}
+                    onClick={() => (liberado ? g.setAvatar({ accessory: acc }) : toast('Item bloqueado - compre na Loja! 🛍️', 'info'))}
                   >
-                    {item?.emoji ?? '❌'} {acc} {!liberado && '🔒'}
+                    <Icon name={item?.emoji ?? 'check'} size={14} /> {acc} {!liberado && '🔒'}
                   </button>
                 )
               })}
